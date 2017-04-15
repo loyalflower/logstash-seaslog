@@ -1,0 +1,65 @@
+input {
+    file {
+        #type是给结果增加了一个属性叫type值为"<xxx>"的条目。这里的type，对应了ES中index中的type，即如果输入ES时，没有指定type，那么这里的type将作为ES中index的type。
+        type => "seaslog" 
+        #日志文件路径。也可以 ["path1", "path2"] 配置多个路径。需要填绝对路径
+        path => "f:/www/logstash-seaslog/config/*.log"
+
+        #排除日志文件
+        #exclude => ""
+
+        #sincedb_path表示文件读取进度的记录，每行表示一个文件，每行有两个数字，第一个表示文件的inode，第二个表示文件读取到的位置（byteoffset）。默认为$HOME/.sincedb*。 绝对路径
+        sincedb_path => "f:/www/logstash-seaslog/config/access_progress"
+
+        #start_position可以设置为beginning或者end，beginning表示从头开始读取文件，end表示读取最新的，这个也要和ignore_older一起使用。
+        start_position => beginning
+        
+        #ignore_older表示了针对多久的文件进行监控，默认一天，单位为秒，可以自己定制，比如默认只读取一天内被修改的文件。
+        ignore_older => 86400
+
+        #这个值默认是\n 换行符，如果设置为空""，那么后果是每个字符代表一个event
+        #此选项竟然会导致不读取文件，难道跟windows有关？
+        #delimiter => "\n"
+
+        #add_field增加属性。这里使用了${HOSTNAME}，即本机的环境变量，如果要使用本机的环境变量，那么需要在启动命令上加--alow-env。
+        add_field => {"log_hostname"=>"king-pc"}
+
+        #设置多长时间扫描目录，发现新文件
+        discover_interval => 15
+
+        #设置多长时间检测文件是否修改
+        stat_interval => 1
+
+        #设置多长时间会写入读取的位置信息
+        sincedb_write_interval => 15
+
+        #这个表示关闭超过（默认）3600秒后追踪文件。这个对于multiline来说特别有用。... 这个参数和logstash对文件的读取方式有关，两种方式read tail，如果是read
+        close_older => 86401
+
+        #codec就是帮助input搞定了复杂情形下识别并包装事件对象的问题
+        codec => multiline {
+          pattern => "^(debug|info|notice|warning|error|critical|alert|emergency) \|"
+          #这个negate是否定的意思，意思跟pattern相反，也就是不满足patter的意思。
+          negate => true
+          #what有两个值可选 previous和next，举例说明，java的异常从第二行以空格开始，这里就可以pattern匹配空格开始，what设置为previous意思是空格开头这行跟上一行属于同一event。另一个例子，有时候一条命令太长，当以\结尾时表示这行属于跟下一行属于同一event，这时需要使用negate=>true，what=>'next'。
+          what => "previous"
+          auto_flush_interval => 10
+        }
+    }
+}
+
+filter {
+    grok {
+        patterns_dir => "f:/www/logstash-seaslog/pattern/"
+        match => {
+            "message" => "%{LOGLEVEL:level} \| %{INT:pid:int} \| %{NUMBER:time_now:float} \| %{CNDATE:real_time} \| %{MSG:message}"
+        }
+        overwrite => [ "message" ]
+    }
+}
+
+output {
+    stdout {
+        codec => rubydebug
+    }
+}
