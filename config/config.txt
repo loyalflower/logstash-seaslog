@@ -9,7 +9,7 @@ input {
         #exclude => ""
 
         #sincedb_path表示文件读取进度的记录，每行表示一个文件，每行有两个数字，第一个表示文件的inode，第二个表示文件读取到的位置（byteoffset）。默认为$HOME/.sincedb*。 绝对路径
-        sincedb_path => "f:/www/logstash-seaslog/config/access_progress"
+        sincedb_path => "f:/www/logstash-seaslog/example/access_progress"
 
         #start_position可以设置为beginning或者end，beginning表示从头开始读取文件，end表示读取最新的，这个也要和ignore_older一起使用。
         start_position => beginning

@@ -10,4 +10,4 @@ logstash 5.3.0
 1. 默认的seaslog日志
 2. seaslog捕获的 php 异常
 
-**暂时测试直接发送到elasticsearch**，但是我想应该不复杂
+**暂未测试直接发送到ElasticSearch**，但是我想应该不复杂
